@@ -1,0 +1,10 @@
+appId: ${app_id}
+---
+
+- launchApp
+- runScript:
+    file: terminal.js
+    env:
+      exec: "sw_vers -productName"
+      async: false
+- assertTrue: ${output.terminal == "macOS"}

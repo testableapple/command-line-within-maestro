@@ -1,0 +1,39 @@
+name: Test
+
+on:
+  push:
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Gaining access to Command-Line within Maestro
+    runs-on: macos-12
+    steps:
+      - uses: actions/checkout@v3.5.0
+
+      - uses: actions/setup-python@v4.5.0
+        with:
+          python-version: 3.11
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          npm install
+          brew install facebook/fb/idb-companion
+          pip install -r requirements.txt
+
+      - name: Install maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Start the server
+        run: node server.js &
+
+      - name: Run the sample test
+        run: |
+          udid=`idb list-targets --only simulator --json | jq 'select(.name=="iPhone 14")' | jq -r '.udid'`
+          app_id="com.apple.Preferences" # This is a Settings app, just as an example
+          xcrun simctl bootstatus ${udid} -b
+          maestro --udid ${udid} test --env app_id=${app_id} test.yaml
